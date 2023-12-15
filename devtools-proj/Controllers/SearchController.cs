@@ -1,11 +1,11 @@
-using devtools_proj.Persistence.Entities;
+using devtools_proj.DTOs;
 using devtools_proj.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace devtools_proj.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[controller]/tracks")]
 public class SearchController : ControllerBase
 {
     private readonly ILogger<SearchController> _logger;
@@ -19,29 +19,90 @@ public class SearchController : ControllerBase
         _searchService = searchService;
     }
 
-    [HttpGet("tracks")]
-    public async Task<IEnumerable<Track>> GetTracks()
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<TrackDto>>> GetTracks()
     {
-        return await _searchService.GetTracks();
+        IEnumerable<TrackDto> result;
+        try
+        {
+            result = await _searchService.GetTracks();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.ToString());
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+
+        return Ok(result);
     }
 
-    [HttpPost("tracks")]
-    public async Task<Track> CreateTrack()
+    [HttpGet("{trackId}")]
+    public async Task<ActionResult<TrackDto>> GetTrack(string trackId)
     {
-        throw new NotImplementedException();
-        // return await _searchService.CreateTrack();
+        TrackDto result;
+        try
+        {
+            result = await _searchService.GetTrack(trackId);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.ToString());
+            return NotFound($"Track with id {trackId} was not found.");
+        }
+
+        return Ok(result);
     }
 
-    [HttpGet("artists")]
-    public async Task<IEnumerable<Artist>> GetArtists()
+    [HttpPost]
+    public async Task<ActionResult<TrackDto>> CreateTrack([FromBody] CreateTrackDto trackDto)
     {
-        return await _searchService.GetArtists();
+        TrackDto result;
+        try
+        {
+            result = await _searchService.CreateTrack(trackDto);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.ToString());
+            return BadRequest();
+        }
+
+        return StatusCode(StatusCodes.Status201Created, result);
     }
 
-    [HttpPost("artists")]
-    public async Task<Artist> CreateArtist()
+    [HttpDelete("{trackId}")]
+    public async Task<ActionResult> DeleteTrack(string trackId)
     {
-        throw new NotImplementedException();
-        // return await _searchService.CreateArtist();
+        try
+        {
+            await _searchService.DeleteTrack(trackId);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.ToString());
+            return NotFound($"Track with id {trackId} was not found.");
+        }
+
+        return Ok();
+    }
+
+    [HttpPut]
+    public async Task<ActionResult> UpdateTrack([FromBody] TrackDto trackDto)
+    {
+        try
+        {
+            await _searchService.UpdateTrack(trackDto);
+        }
+        catch (ArgumentException)
+        {
+            return NotFound($"Track with id {trackDto.Id} was not found.");
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.ToString());
+            return BadRequest();
+        }
+
+        return Ok();
     }
 }

@@ -5,11 +5,13 @@ namespace devtools_proj.Services;
 
 public interface ISearchService
 {
-    public Task<IEnumerable<Track>> GetTracks();
+    public Task<IEnumerable<TrackDto>> GetTracks();
 
-    public Track CreateTrack(TrackDto trackDto);
+    public Task<TrackDto> GetTrack(string trackId);
 
-    public Task<IEnumerable<Artist>> GetArtists();
+    public Task<TrackDto> CreateTrack(CreateTrackDto trackDto);
 
-    public Track CreateArtist(ArtistDto artistDto);
+    public Task DeleteTrack(string trackId);
+
+    public Task UpdateTrack(TrackDto trackDto);
 }

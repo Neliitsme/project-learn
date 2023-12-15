@@ -5,12 +5,14 @@ public interface IPiece : INamed
     /// <summary>
     ///     The one who released the track
     /// </summary>
-    public Artist Author { get; set; }
+    // public Artist Author { get; set; }
+    public string Author { get; set; }
 
     /// <summary>
     ///     A list of guest-artists, co-authors, etc. Includes author.
     /// </summary>
-    public List<Artist> Artists { get; set; }
+    // public List<Artist> Artists { get; set; }
+    public List<string> Artists { get; set; }
 
     /// <summary>
     ///     Self-explanatory, genres of the track
