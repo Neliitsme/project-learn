@@ -4,7 +4,7 @@ services:
 
   mongo:
     image: mongo
-    restart: always
+    restart: unless-stopped
     ports:
       - 27017:27017
     environment:
@@ -13,10 +13,18 @@ services:
 
   mongo-express:
     image: mongo-express
-    restart: always
+    restart: unless-stopped
     ports:
       - 8081:8081
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+
+  grafana:
+    image: grafana/grafana-enterprise
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana-volume:/var/lib/grafana
