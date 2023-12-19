@@ -4,6 +4,7 @@ using devtools_proj.Settings;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,8 +41,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseRouting();
+app.UseHttpMetrics();
+
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapMetrics();
 
 app.Run();

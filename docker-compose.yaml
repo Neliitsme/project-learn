@@ -28,3 +28,12 @@ services:
       - 3000:3000
     volumes:
       - ./grafana-volume:/var/lib/grafana
+
+  prometheus:
+    image: ubuntu/prometheus
+    ports:
+      - 9090:9090
+    environment:
+      - TZ=UTC
+    volumes:
+      - ./prom/prometheus.yml:/etc/prometheus/prometheus.yml
