@@ -1,4 +1,5 @@
 using devtools_proj.DTOs;
+using devtools_proj.Metrics.ReporterInterfaces;
 using devtools_proj.Persistence;
 using devtools_proj.Persistence.Entities;
 using MongoDB.Bson;
@@ -12,10 +13,13 @@ public class SearchService : ISearchService
 
     private readonly ILogger<ISearchService> _logger;
 
-    public SearchService(IDbContext db, ILogger<ISearchService> logger)
+    private readonly ITracksMetricsReporter _metricsReporter;
+
+    public SearchService(IDbContext db, ITracksMetricsReporter metricsReporter, ILogger<ISearchService> logger)
     {
         _db = db;
         _logger = logger;
+        _metricsReporter = metricsReporter;
     }
 
     public async Task<IEnumerable<TrackDto>> GetTracks()
@@ -44,6 +48,7 @@ public class SearchService : ISearchService
         await _db.Tracks.InsertOneAsync(track);
 
         _logger.LogInformation($"Created {nameof(Track)} {track.Id.ToString()} successfully.");
+        _metricsReporter.IncrementGauge();
         return new TrackDto(track);
     }
 
@@ -57,6 +62,7 @@ public class SearchService : ISearchService
         }
 
         _logger.LogInformation($"{nameof(Track)} has been removed successfully.");
+        _metricsReporter.DecrementGauge();
     }
 
     public async Task UpdateTrack(TrackDto trackDto)

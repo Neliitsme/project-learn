@@ -1,5 +1,4 @@
 using devtools_proj.DTOs;
-using devtools_proj.Persistence.Entities;
 
 namespace devtools_proj.Services;
 

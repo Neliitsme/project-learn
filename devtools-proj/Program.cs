@@ -1,3 +1,5 @@
+using devtools_proj.Metrics.ReporterInterfaces;
+using devtools_proj.Metrics.Reporters;
 using devtools_proj.Persistence;
 using devtools_proj.Services;
 using devtools_proj.Settings;
@@ -17,10 +19,13 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
     new MongoClient(builder.Configuration.GetConnectionString("ConnectionUri")));
 
 // Set up made up db context 
-builder.Services.AddScoped<IDbContext, DbContext>();
+builder.Services.AddSingleton<IDbContext, DbContext>();
 
 // Set up services
 builder.Services.AddScoped<ISearchService, SearchService>();
+
+// Set up metrics
+builder.Services.AddSingleton<ITracksMetricsReporter, TracksMetricsReporter>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
