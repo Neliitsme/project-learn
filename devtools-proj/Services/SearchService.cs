@@ -25,7 +25,7 @@ public class SearchService : ISearchService
     public async Task<IEnumerable<TrackDto>> GetTracks()
     {
         var tracks = await _db.Tracks.Find(_ => true).ToListAsync();
-        _logger.LogInformation($"Fetched all {nameof(Track)}s successfully.");
+        _logger.LogInformation($"Fetched all {nameof(Track)}s.");
         return tracks.Select(t => new TrackDto(t));
     }
 
@@ -39,6 +39,7 @@ public class SearchService : ISearchService
             throw new ArgumentException();
         }
 
+        _logger.LogInformation($"Fetched a {nameof(Track)} with id {trackId}");
         return new TrackDto(track);
     }
 
@@ -47,7 +48,7 @@ public class SearchService : ISearchService
         var track = new Track(trackDto);
         await _db.Tracks.InsertOneAsync(track);
 
-        _logger.LogInformation($"Created {nameof(Track)} {track.Id.ToString()} successfully.");
+        _logger.LogInformation($"Created {nameof(Track)} {track.Id.ToString()}.");
         _metricsReporter.IncrementGauge();
         return new TrackDto(track);
     }
@@ -61,7 +62,7 @@ public class SearchService : ISearchService
             throw new ArgumentException();
         }
 
-        _logger.LogInformation($"{nameof(Track)} has been removed successfully.");
+        _logger.LogInformation($"{nameof(Track)} has been removed.");
         _metricsReporter.DecrementGauge();
     }
 
@@ -102,6 +103,6 @@ public class SearchService : ISearchService
             throw new ArgumentException();
         }
 
-        _logger.LogInformation($"{nameof(Track)} {trackDto.Id} has been updated successfully.");
+        _logger.LogInformation($"{nameof(Track)} {trackDto.Id} has been updated.");
     }
 }

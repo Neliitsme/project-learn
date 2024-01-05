@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-
   mongo:
     image: mongo
     restart: unless-stopped
@@ -37,3 +36,11 @@ services:
       - TZ=UTC
     volumes:
       - ./prom/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - 3100:3100
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-volume:/loki
