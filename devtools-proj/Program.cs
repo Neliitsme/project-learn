@@ -8,6 +8,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Prometheus;
 using Serilog;
 using Serilog.Sinks.Grafana.Loki;
@@ -18,11 +20,13 @@ using Serilog.Sinks.Grafana.Loki;
 
 // TODO: https://grafana.com/blog/2020/04/21/how-labels-in-loki-can-make-log-queries-faster-and-easier/#cardinality
 
+const string appName = "devtools-proj";
+
 // Set up logger
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
     .Enrich.FromLogContext()
-    .Enrich.WithProperty("Application", "devtools-proj")
+    .Enrich.WithProperty("Application", appName)
     .WriteTo.Console()
     .WriteTo.GrafanaLoki("http://localhost:3100", propertiesAsLabels: new[] { "Application" })
     .CreateLogger();
@@ -37,6 +41,11 @@ try
 
     // Use Serilog for logging
     builder.Host.UseSerilog();
+
+    // Add OTEL for traces
+    builder.Services.AddOpenTelemetry()
+        .ConfigureResource(r => r.AddService(appName))
+        .WithTracing(t => t.AddAspNetCoreInstrumentation().AddConsoleExporter().AddOtlpExporter());
 
     // Set up appsettings configs
     builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("ConnectionStrings"));

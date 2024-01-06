@@ -548,3 +548,4 @@ notes.md
 grafana-volume
 prom
 loki-volume
+tempo-volume
