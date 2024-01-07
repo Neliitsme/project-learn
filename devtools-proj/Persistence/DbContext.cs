@@ -9,9 +9,9 @@ public class DbContext : IDbContext
 {
     private readonly IMongoDatabase _db;
 
-    public DbContext(IMongoClient mongoClient, IMongoSettings settings)
+    public DbContext(IMongoClient mongoClient, IConnectionStrings settings)
     {
-        _db = mongoClient.GetDatabase(settings.DatabaseName);
+        _db = mongoClient.GetDatabase(settings.MongoDatabaseName);
 
         SetupEntities();
     }

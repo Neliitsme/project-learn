@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using devtools_proj.Persistence.Entities;
 
 namespace devtools_proj.DTOs;
 
 public class TrackDto
 {
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public TrackDto()
     {
     }
@@ -30,5 +32,5 @@ public class TrackDto
 
     public int? Length { get; set; }
 
-    public string Name { get; set; }
+    public string? Name { get; set; }
 }

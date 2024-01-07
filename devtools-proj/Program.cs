@@ -12,26 +12,23 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Prometheus;
 using Serilog;
+using Serilog.Debugging;
 using Serilog.Sinks.Grafana.Loki;
 
-// TODO: Could move this configuration somewhere else
+// TODO: Could move serilog configuration somewhere else
 // https://github.com/serilog/serilog-aspnetcore?tab=readme-ov-file#two-stage-initialization
 // https://github.com/serilog-contrib/serilog-sinks-grafana-loki/blob/master/sample/Serilog.Sinks.Grafana.Loki.SampleWebApp/appsettings.json
 
 // TODO: https://grafana.com/blog/2020/04/21/how-labels-in-loki-can-make-log-queries-faster-and-easier/#cardinality
 
-const string appName = "devtools-proj";
-
-// Set up logger
+// Bootstrap Serilog for logging
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
     .Enrich.FromLogContext()
-    .Enrich.WithProperty("Application", appName)
     .WriteTo.Console()
-    .WriteTo.GrafanaLoki("http://localhost:3100", propertiesAsLabels: new[] { "Application" })
-    .CreateLogger();
+    .CreateBootstrapLogger();
 
-Serilog.Debugging.SelfLog.Enable(Console.Error);
+SelfLog.Enable(Console.Error);
 
 try
 {
@@ -39,20 +36,38 @@ try
 
     Log.Information("Starting web application");
 
-    // Use Serilog for logging
-    builder.Host.UseSerilog();
+    // Set up appsettings configs
+    builder.Services.AddOptions<ConnectionStrings>()
+        .Bind(builder.Configuration.GetSection(nameof(ConnectionStrings)))
+        .ValidateDataAnnotations();
+    builder.Services.AddOptions<GeneralSettings>()
+        .Bind(builder.Configuration.GetSection(nameof(GeneralSettings)))
+        .ValidateDataAnnotations();
+
+    var generalSettings = builder.Configuration.GetSection(nameof(GeneralSettings)).Get<GeneralSettings>() ??
+                          throw new ArgumentNullException(nameof(GeneralSettings));
+    var connectionStrings = builder.Configuration.GetSection(nameof(ConnectionStrings)).Get<ConnectionStrings>() ??
+                            throw new ArgumentNullException(nameof(ConnectionStrings));
+
+    // Set up appsettings configs for injecting 
+    builder.Services.AddSingleton<IConnectionStrings>(sp => sp.GetRequiredService<IOptions<ConnectionStrings>>().Value);
+    builder.Services.AddSingleton<IGeneralSettings>(sp => sp.GetRequiredService<IOptions<GeneralSettings>>().Value);
 
     // Add OTEL for traces
     builder.Services.AddOpenTelemetry()
-        .ConfigureResource(r => r.AddService(appName))
+        .ConfigureResource(r => r.AddService(generalSettings.ProjectName))
         .WithTracing(t => t.AddAspNetCoreInstrumentation().AddConsoleExporter().AddOtlpExporter());
 
-    // Set up appsettings configs
-    builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("ConnectionStrings"));
-    builder.Services.AddSingleton<IMongoSettings>(sp => sp.GetRequiredService<IOptions<MongoSettings>>().Value);
+    // Final Serilog setup
+    builder.Host.UseSerilog((_, _, configuration) => configuration
+        .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Application", generalSettings.ProjectName)
+        .WriteTo.Console()
+        .WriteTo.GrafanaLoki(connectionStrings.LokiUri, propertiesAsLabels: new[] { "Application" }));
 
     // Set up mongo client, should be a singleton
-    var mongoClient = new MongoClient(builder.Configuration.GetConnectionString("ConnectionUri"));
+    var mongoClient = new MongoClient(connectionStrings.MongoUri);
     try
     {
         mongoClient.GetDatabase("admin").RunCommand<BsonDocument>(new BsonDocument("ping", 1));
