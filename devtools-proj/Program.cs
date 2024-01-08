@@ -37,6 +37,7 @@ try
     Log.Information("Starting web application");
 
     // Set up appsettings configs
+    Log.Information("Reading appsettings");
     builder.Services.AddOptions<ConnectionStrings>()
         .Bind(builder.Configuration.GetSection(nameof(ConnectionStrings)))
         .ValidateDataAnnotations();
@@ -59,6 +60,7 @@ try
         .WithTracing(t => t.AddAspNetCoreInstrumentation().AddConsoleExporter().AddOtlpExporter());
 
     // Final Serilog setup
+    Log.Information("Registering Serilog loki sink");
     builder.Host.UseSerilog((_, _, configuration) => configuration
         .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
         .Enrich.FromLogContext()
@@ -67,16 +69,22 @@ try
         .WriteTo.GrafanaLoki(connectionStrings.LokiUri, propertiesAsLabels: new[] { "Application" }));
 
     // Set up mongo client, should be a singleton
+    Log.Information("Connecting to Mongo");
     var mongoClient = new MongoClient(connectionStrings.MongoUri);
+
+    Log.Information("Verifying Mongo connection");
     try
     {
         mongoClient.GetDatabase("admin").RunCommand<BsonDocument>(new BsonDocument("ping", 1));
+        Log.Information("Connected to mongo successfully");
     }
     catch (Exception)
     {
         Log.Fatal("Could not connect to the MongoDB");
         throw;
     }
+
+    Log.Information("Registering DI services");
 
     builder.Services.AddSingleton<IMongoClient>(_ =>
         mongoClient);
@@ -98,6 +106,7 @@ try
         options.SwaggerDoc("v1", new OpenApiInfo { Title = "Devtools proj API", Version = "v1" });
     });
 
+    Log.Information("Building WebApp");
     var app = builder.Build();
 
     // Enable Serilog request logging
@@ -120,6 +129,7 @@ try
     app.MapControllers();
     app.MapMetrics();
 
+    Log.Information("Running WebApp");
     app.Run();
 }
 catch (Exception e)
