@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using devtools_proj.Metrics.ReporterInterfaces;
 using devtools_proj.Metrics.Reporters;
 using devtools_proj.Persistence;
@@ -57,7 +56,8 @@ try
     // Add OTEL for traces
     builder.Services.AddOpenTelemetry()
         .ConfigureResource(r => r.AddService(generalSettings.ProjectName))
-        .WithTracing(t => t.AddAspNetCoreInstrumentation().AddConsoleExporter().AddOtlpExporter());
+        .WithTracing(t => t.AddAspNetCoreInstrumentation().AddConsoleExporter().AddOtlpExporter().AddOtlpExporter(
+            options => { options.Endpoint = new Uri("http://grafana-tempo:4317"); }));
 
     // Final Serilog setup
     Log.Information("Registering Serilog loki sink");
