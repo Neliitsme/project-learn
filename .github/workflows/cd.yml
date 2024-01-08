@@ -32,3 +32,16 @@ jobs:
           context: .
           push: true
           tags: nelite/devtools-proj-image:latest
+
+      - name: Set up the image on the server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            docker pull nelite/devtools-proj-image:latest || true
+            docker stop devtools-proj || true
+            docker rm devtools-proj || true
+            docker run -d -p 5053:5053 --name devtools-proj --network=devtools-tempo_default nelite/devtools-proj-image
